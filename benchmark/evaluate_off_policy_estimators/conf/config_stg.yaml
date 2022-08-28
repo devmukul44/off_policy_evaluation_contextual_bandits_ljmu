@@ -1,0 +1,9 @@
+campaign: 'men'
+behavior_policy: 'bts'
+evaluation_policy: 'random'
+base_model: 'lightgbm'
+n_runs: 2
+n_jobs: 2
+bootstrap_sample_size: 10000
+n_sim_to_compute_action_dist: 10
+random_state: 12345

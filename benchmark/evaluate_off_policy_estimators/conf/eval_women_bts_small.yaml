@@ -1,0 +1,9 @@
+campaign: 'women'
+behavior_policy: 'bts'
+evaluation_policy: 'random'
+base_model: 'lightgbm'
+n_runs: 200
+n_jobs: 100
+bootstrap_sample_size: 30000
+n_sim_to_compute_action_dist: 1000000
+random_state: 12345

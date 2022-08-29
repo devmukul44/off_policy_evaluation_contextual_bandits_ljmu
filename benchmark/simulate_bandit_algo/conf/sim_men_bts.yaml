@@ -1,0 +1,10 @@
+campaign: 'men'
+behavior_policy: 'bts'
+base_model: 'lightgbm'
+n_jobs: 50
+n_bootstrap_samples_for_ope: 10000
+batch_update_size: 1000
+# only for bts-obp
+n_sim_to_compute_action_dist: 1000000
+bootstrap_sample_size_bandit_feedback: -1
+random_state: 12345

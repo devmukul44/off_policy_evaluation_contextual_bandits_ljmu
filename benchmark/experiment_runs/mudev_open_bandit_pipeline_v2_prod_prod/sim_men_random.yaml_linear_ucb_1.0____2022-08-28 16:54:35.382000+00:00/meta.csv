@@ -1,0 +1,26 @@
+,14
+run_id,f58ba649ae9e4d568ab6eb27159af65a
+experiment_id,331
+status,FINISHED
+artifact_uri,s3://mlflow-artifacts-bucket/331/f58ba649ae9e4d568ab6eb27159af65a/artifacts
+start_time,2022-08-28 16:54:35.382000+00:00
+end_time,2022-08-28 16:59:03.265000+00:00
+metrics.execution_time_minutes,4.47159595489502
+params.random_state,12345
+params.bandit_sim_policy_name,linear_ucb_1.0
+params.bootstrap_sample_size_bandit_feedback,-1
+params.hyper_parameter,1.0
+params.campaign,men
+params.n_bootstrap_samples_for_ope,1000
+params.n_jobs,50
+params.config_file_name,sim_men_random.yaml
+params.batch_update_size,500
+params.action_dist_method,run_bandit_simulation
+params.behavior_policy,random
+params.n_sim_to_compute_action_dist,1000000
+params.base_model,lightgbm
+tags.mlflow.source.type,LOCAL
+tags.mlflow.runName,sim_men_random.yaml_linear_ucb_1.0
+tags.mlflow.source.git.commit,39f2ac194058584452847f206624148defd5f2d5
+tags.mlflow.source.name,kepten_first_template/main.py
+tags.mlflow.user,it-research

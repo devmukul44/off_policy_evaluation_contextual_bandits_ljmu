@@ -68,14 +68,19 @@ from ..ag_fs import (
     get_execution_environment
 )
 
+from ..custom_dataset import OpenBanditDatasetWithInteractionFeatures
+
 
 class SimulateBandit:
     def __init__(self,
                  config_name: str,
-                 mlflow_exp_id="mudev_open_bandit_pipeline_v2"):
+                 mlflow_exp_id="mudev_open_bandit_pipeline_v2",
+                 preprocessing_context_set=1):
 
+        self.preprocessing_context_set = preprocessing_context_set
         # init mlflow
-        self.mlflow_exp_id = init_mlflow(mlflow_exp_id)
+        self.mlflow_exp_id = mlflow_exp_id
+        init_mlflow(self.mlflow_exp_id)
 
         # configurations for the job
         self.config_file_name = config_name if get_execution_environment() == 'prod' else 'config_stg.yaml'
@@ -90,55 +95,9 @@ class SimulateBandit:
             self.hyperparams: dict = yaml.safe_load(f)
             print(f"hyperparams: {self.hyperparams}")
 
-        self.base_model_dict = dict(
-            logistic=LogisticRegression,
-            lightgbm=GradientBoostingClassifier,
-            random_forest=RandomForestClassifier,
-        )
-
-        # Evaluation Policy Choices
-        self.simulation_policy_dict = dict(bts=BernoulliTS, random=Random)
-
-        # compared OPE estimators
-        self.ope_estimators = [
-            # standard methods
-            DirectMethod(estimator_name='dm'),
-            InverseProbabilityWeighting(estimator_name='ipw'),
-            DoublyRobust(estimator_name='dr'),
-
-            # self normalized methods
-            SelfNormalizedInverseProbabilityWeighting(estimator_name='snipw'),
-            SelfNormalizedDoublyRobust(estimator_name='sndr'),
-
-            # tuned methods
-            # classic tuned methods
-            InverseProbabilityWeightingTuning(
-                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
-                estimator_name='ipw-t'
-            ),
-            DoublyRobustTuning(
-                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
-                estimator_name='dr-t'
-            ),
-
-            # recent tuned methods
-            SwitchDoublyRobustTuning(
-                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
-                estimator_name='switch-dr-t'
-            ),
-            DoublyRobustWithShrinkageTuning(
-                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
-                estimator_name='dr-os-t'
-            ),
-            SubGaussianDoublyRobustTuning(
-                lambdas=[0.0, 0.25, 0.5, 0.75, 1.0],
-                estimator_name='sg-dr-t'
-            ),
-            SubGaussianInverseProbabilityWeightingTuning(
-                lambdas=[0.0, 0.25, 0.5, 0.75, 1.0],
-                estimator_name='sg-ipw-t'
-            ),
-        ]
+        # regression model and ope estimators
+        self.base_model_dict = self.get_base_model_dict()
+        self.ope_estimators = self.get_ope_estimators()
 
         """
         configurations:
@@ -171,153 +130,24 @@ class SimulateBandit:
         self.log_path = Path("./logs") / self.behavior_policy / self.campaign
         self.log_path.mkdir(exist_ok=True, parents=True)
 
-    def get_simulation_bandit_policy_list(
-            self,
-            obd_dataset: OpenBanditDataset):
-        # general kwargs
-        kwargs = dict(
-            n_actions=obd_dataset.n_actions,
-            len_list=obd_dataset.len_list,
-            batch_size=self.batch_update_size,
-            random_state=self.random_state
-        )
-        simulation_policy_list = [
-            # - ContextFree -
-            # - EpsilonGreedy -epsilon [0,1]
-            EpsilonGreedy(epsilon=0.05, **kwargs),  # 5% exploration
-            EpsilonGreedy(epsilon=0.1, **kwargs),  # 10% exploration
-            Random(**kwargs),  # 100% exploration
-
-            # - BernoulliTS -
-            # prior weights
-            BernoulliTS(
-                policy_name="bts-obp",
-                is_zozotown_prior=True,
-                campaign=self.campaign,
-                **kwargs
-            ),
-            # no-priors
-            BernoulliTS(policy_name="bts", **kwargs),
-
-            # # - Contextual - Linear -
-            #
-            # # - LinEpsilonGreedy - epsilon [0,1]
-            # # 5% exploration
-            # LinEpsilonGreedy(
-            #     dim=obd_dataset.dim_context,
-            #     epsilon=0.05,
-            #     **kwargs
-            # ),
-            # # 10% exploration
-            # LinEpsilonGreedy(
-            #     dim=obd_dataset.dim_context,
-            #     epsilon=0.1,
-            #     **kwargs
-            # ),
-            #
-            # # - LinUCB - epsilon [0, inf]
-            # # epsilon 0
-            # LinUCB(
-            #     dim=obd_dataset.dim_context,
-            #     **kwargs
-            # ),
-            # # epsilon 1
-            # LinUCB(
-            #     dim=obd_dataset.dim_context,
-            #     epsilon=1.0,
-            #     **kwargs
-            # ),
-            # # - LinTS -
-            # LinTS(
-            #     dim=obd_dataset.dim_context,
-            #     **kwargs
-            # ),
-            #
-            # # - Contextual - Logistic -
-            #
-            # # - LogisticEpsilonGreedy - epsilon [0,1]
-            # # 5% exploration
-            # LogisticEpsilonGreedy(
-            #     dim=obd_dataset.dim_context,
-            #     epsilon=0.05,
-            #     **kwargs
-            # ),
-            # # 10% exploration
-            # LogisticEpsilonGreedy(
-            #     dim=obd_dataset.dim_context,
-            #     epsilon=0.1,
-            #     **kwargs
-            # ),
-            #
-            # # - LogisticUCB -
-            # # epsilon [0,inf]
-            # LogisticUCB(
-            #     dim=obd_dataset.dim_context,
-            #     **kwargs
-            # ),
-            # # epsilon 1
-            # LogisticUCB(
-            #     dim=obd_dataset.dim_context,
-            #     epsilon=1.0,
-            #     **kwargs
-            # ),
-            #
-            # # - LogisticTS -
-            # LogisticTS(
-            #     dim=obd_dataset.dim_context,
-            #     **kwargs
-            # ),
-        ]
-        return simulation_policy_list
-
     def execute(self):
         start_time = time.time()
-        # Model Training and MLFLOW Tracking
-
-        def plot_action_dist(action_dist: np.ndarray, title):
-            plt.style.use("ggplot")
-            fig, ax = plt.subplots(figsize=(25, 15))
-            pd.Series(
-                action_dist.mean(axis=0).mean(axis=1)
-            ).plot(kind='bar', figsize=(20, 10), ax=ax)
-
-            plt.title("Action Choice Probability : " + str(title), fontsize=25)
-            plt.xlabel("Action Index", fontsize=20)
-            plt.ylabel("Probability", fontsize=20)
-            plt.yticks(fontsize=15)
-            plt.xticks(fontsize=15)
-            # plt.savefig(str(self.log_path / f"{title}.png"))
-            return fig
-
-        def plot_ope_summary(estimated_interval: pd.DataFrame, title: str, relative=False):
-            plt.style.use("ggplot")
-            fig, ax = plt.subplots(figsize=(15, 10))
-            if relative:
-                sns.barplot(estimated_interval.T / bandit_feedback["reward"].mean(), ax=ax)
-            else:
-                sns.barplot(data=estimated_interval.T, ax=ax)
-
-            plt.title(f"Estimated Policy Value for " + str(title), fontsize=25)
-            plt.xlabel("OPE Estimators", fontsize=20)
-            plt.ylabel(f"Estimated Policy Value (± 95% CI)", fontsize=20)
-            plt.yticks(fontsize=22.5)
-            plt.xticks(fontsize=32.5 - len(self.ope_estimators), rotation=45)
-
-            return fig
-
         # mlflow run
-        with mlflow.start_run(run_name=self.config_file_name) as run:
+        with mlflow.start_run(run_name=f"________{self.config_file_name}________") as run:
             mlflow.log_param("config_file_name", self.config_file_name)
             mlflow.log_params(self.config)
             mlflow.log_dict(self.hyperparams, "hyperparams.yaml")
 
             # load dataset
             base_data_path = download_data(self.behavior_policy, self.campaign)
-            obd_dataset: OpenBanditDataset = OpenBanditDataset(
+            obd_dataset = OpenBanditDatasetWithInteractionFeatures(
                 behavior_policy=self.behavior_policy,
                 campaign=self.campaign,
-                data_path=base_data_path
+                data_path=base_data_path,
+                context_set=self.preprocessing_context_set
             )
+            mlflow.log_param("preprocessing_context_set", str(self.preprocessing_context_set))
+            mlflow.log_param("dataset_dim_context", str(obd_dataset.dim_context))
 
             # sample bootstrap from batch logged bandit feedback
             if self.bootstrap_sample_size_bandit_feedback < 1:
@@ -346,13 +176,12 @@ class SimulateBandit:
                 random_state=self.random_state,
             )
             action_dist_reg_model_df = pd.DataFrame(estimated_rewards_by_reg_model.mean(axis=0))
-            logging.info(str(action_dist_reg_model_df.head()))
             action_dist_path = self.log_path / f"{self.base_model}_reg_action_dist.csv"
             action_dist_reg_model_df.to_csv(action_dist_path)
             mlflow.log_artifact(str(action_dist_path))
             mlflow.log_figure(
-                plot_action_dist(estimated_rewards_by_reg_model,
-                                 f"{str(self.base_model).capitalize()} Regression"),
+                self.plot_action_dist(estimated_rewards_by_reg_model,
+                                      f"{str(self.base_model).capitalize()} Regression"),
                 f"{self.base_model}_action_distribution.png"
             )
 
@@ -400,7 +229,8 @@ class SimulateBandit:
                     mlflow.log_artifact(str(action_dist_path))
 
                     mlflow.log_figure(
-                        plot_action_dist(action_dist_evaluation_policy, f"{str(bandit_sim_policy_name).capitalize()} Policy"),
+                        self.plot_action_dist(action_dist_evaluation_policy,
+                                              f"{str(bandit_sim_policy_name).capitalize()} Policy"),
                         f"{bandit_sim_policy_name}_action_distribution.png"
                     )
 
@@ -416,25 +246,27 @@ class SimulateBandit:
                     estimated_policy_value, estimated_interval = ope.summarize_off_policy_estimates(
                         action_dist=action_dist_evaluation_policy,
                         estimated_rewards_by_reg_model=estimated_rewards_by_reg_model,
-                        n_bootstrap_samples=self.n_bootstrap_samples_for_ope,  # number of resampling performed in bootstrap sampling.
+                        n_bootstrap_samples=self.n_bootstrap_samples_for_ope,
                         random_state=self.random_state,
                     )
                     # log summary
-                    ope_summary_df = pd.concat([estimated_policy_value, estimated_interval],axis=1)
+                    ope_summary_df = pd.concat([estimated_policy_value, estimated_interval], axis=1)
                     ope_summary_path = self.log_path / f"{bandit_sim_policy_name}_ope_summary.csv"
                     ope_summary_df.to_csv(ope_summary_path)
                     mlflow.log_artifact(str(ope_summary_path))
 
                     mlflow.log_figure(
-                        plot_ope_summary(estimated_interval,
-                                         f"{str(bandit_sim_policy_name).capitalize()} Policy",
-                                         relative=False),
+                        self.plot_ope_summary(estimated_interval=estimated_interval,
+                                              title=f"{str(bandit_sim_policy_name).capitalize()} Policy",
+                                              bandit_feedback=bandit_feedback,
+                                              relative=False),
                         f"{bandit_sim_policy_name}_ope_summary.png"
                     )
                     mlflow.log_figure(
-                        plot_ope_summary(estimated_interval,
-                                         f"{str(bandit_sim_policy_name).capitalize()} Policy",
-                                         relative=True),
+                        self.plot_ope_summary(estimated_interval=estimated_interval,
+                                              title=f"{str(bandit_sim_policy_name).capitalize()} Policy",
+                                              bandit_feedback=bandit_feedback,
+                                              relative=True),
                         f"{bandit_sim_policy_name}_ope_summary_relative.png"
                     )
                     mlflow.log_metric("execution_time_minutes", (time.time() - process_start_time) / 60)
@@ -443,3 +275,200 @@ class SimulateBandit:
                 ([delayed(process)(i, bandit_policy) for i, bandit_policy in enumerate(bandit_sim_policy_list)])
 
             mlflow.log_metric("execution_time_minutes", (time.time() - start_time) / 60)
+
+    def get_base_model_dict(self):
+        return dict(
+            logistic=LogisticRegression,
+            lightgbm=GradientBoostingClassifier,
+            random_forest=RandomForestClassifier,
+        )
+
+    def get_ope_estimators(self):
+        ope_estimators = [
+            # standard methods
+            DirectMethod(estimator_name='dm'),
+            InverseProbabilityWeighting(estimator_name='ipw'),
+            DoublyRobust(estimator_name='dr'),
+
+            # self normalized methods
+            SelfNormalizedInverseProbabilityWeighting(estimator_name='snipw'),
+            SelfNormalizedDoublyRobust(estimator_name='sndr'),
+
+            # tuned methods
+            # classic tuned methods
+            InverseProbabilityWeightingTuning(
+                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
+                estimator_name='ipw-t'
+            ),
+            DoublyRobustTuning(
+                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
+                estimator_name='dr-t'
+            ),
+
+            # recent tuned methods
+            SwitchDoublyRobustTuning(
+                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
+                estimator_name='switch-dr-t'
+            ),
+            DoublyRobustWithShrinkageTuning(
+                lambdas=[10, 50, 100, 500, 1000, 5000, 10000, np.inf],
+                estimator_name='dr-os-t'
+            ),
+            SubGaussianDoublyRobustTuning(
+                lambdas=[0.0, 0.25, 0.5, 0.75, 1.0],
+                estimator_name='sg-dr-t'
+            ),
+            SubGaussianInverseProbabilityWeightingTuning(
+                lambdas=[0.0, 0.25, 0.5, 0.75, 1.0],
+                estimator_name='sg-ipw-t'
+            ),
+        ]
+        return ope_estimators
+
+    def get_simulation_bandit_policy_list(self, obd_dataset: OpenBanditDataset):
+        # general kwargs
+        kwargs = dict(
+            n_actions=obd_dataset.n_actions,
+            len_list=obd_dataset.len_list,
+            batch_size=self.batch_update_size,
+            random_state=self.random_state
+        )
+        simulation_policy_list = [
+            # - ContextFree -
+            # - EpsilonGreedy -epsilon [0,1]
+            EpsilonGreedy(epsilon=0.02, **kwargs),  # 2% exploration
+            EpsilonGreedy(epsilon=0.05, **kwargs),  # 5% exploration
+            EpsilonGreedy(epsilon=0.1, **kwargs),  # 10% exploration
+            Random(**kwargs),  # 100% exploration
+
+            # - BernoulliTS -
+            # prior weights
+            BernoulliTS(
+                policy_name="bts-obp",
+                is_zozotown_prior=True,
+                campaign=self.campaign,
+                **kwargs
+            ),
+            # no-priors
+            BernoulliTS(policy_name="bts", **kwargs),
+
+            # - Contextual - Linear -
+
+            # - LinEpsilonGreedy - epsilon [0,1]
+            # 2% exploration
+            LinEpsilonGreedy(
+                dim=obd_dataset.dim_context,
+                epsilon=0.02,
+                **kwargs
+            ),
+            # 5% exploration
+            LinEpsilonGreedy(
+                dim=obd_dataset.dim_context,
+                epsilon=0.05,
+                **kwargs
+            ),
+            # 10% exploration
+            LinEpsilonGreedy(
+                dim=obd_dataset.dim_context,
+                epsilon=0.1,
+                **kwargs
+            ),
+
+            # - LinUCB - epsilon [0, inf]
+            # epsilon 0
+            LinUCB(
+                dim=obd_dataset.dim_context,
+                **kwargs
+            ),
+            # epsilon 1
+            LinUCB(
+                dim=obd_dataset.dim_context,
+                epsilon=1.0,
+                **kwargs
+            ),
+            # epsilon 3
+            LinUCB(
+                dim=obd_dataset.dim_context,
+                epsilon=3.0,
+                **kwargs
+            ),
+            # - LinTS -
+            LinTS(
+                dim=obd_dataset.dim_context,
+                **kwargs
+            ),
+
+            # - Contextual - Logistic -
+
+            # - LogisticEpsilonGreedy - epsilon [0,1]
+            # 5% exploration
+            LogisticEpsilonGreedy(
+                dim=obd_dataset.dim_context,
+                epsilon=0.05,
+                **kwargs
+            ),
+            # 10% exploration
+            LogisticEpsilonGreedy(
+                dim=obd_dataset.dim_context,
+                epsilon=0.1,
+                **kwargs
+            ),
+
+            # - LogisticUCB -
+            # epsilon [0,inf]
+            LogisticUCB(
+                dim=obd_dataset.dim_context,
+                **kwargs
+            ),
+            # epsilon 1
+            LogisticUCB(
+                dim=obd_dataset.dim_context,
+                epsilon=1.0,
+                **kwargs
+            ),
+            # epsilon 3
+            LogisticUCB(
+                dim=obd_dataset.dim_context,
+                epsilon=3.0,
+                **kwargs
+            ),
+
+            # - LogisticTS -
+            LogisticTS(
+                dim=obd_dataset.dim_context,
+                **kwargs
+            ),
+        ]
+        return simulation_policy_list
+
+    def plot_ope_summary(self, estimated_interval: pd.DataFrame, title: str, bandit_feedback, relative=False):
+        plt.style.use("ggplot")
+        fig, ax = plt.subplots(figsize=(18, 12))
+        plt.title(f"Estimated Policy Value for " + str(title), fontsize=25)
+        plt.xlabel("OPE Estimators", fontsize=20)
+        plt.ylabel(f"Estimated Policy Value (± 95% CI)", fontsize=20)
+        plt.yticks(fontsize=22.5)
+        plt.xticks(fontsize=32.5 - len(self.ope_estimators), rotation=25)
+        # plot
+        if relative:
+            mean_baseline_policy_reward = bandit_feedback["reward"].mean()
+            sns.barplot(data=estimated_interval.T / mean_baseline_policy_reward, ax=ax)
+        else:
+            sns.barplot(data=estimated_interval.T, ax=ax)
+        # plt.savefig(str(self.log_path / f"{title}_ope_summary.png"))
+        return fig
+
+    def plot_action_dist(self, action_dist: np.ndarray, title):
+        plt.style.use("ggplot")
+        fig, ax = plt.subplots(figsize=(25, 15))
+        plt.title("Action Choice Probability : " + str(title), fontsize=25)
+        plt.xlabel("Action Index", fontsize=20)
+        plt.ylabel("Probability", fontsize=20)
+        plt.yticks(fontsize=15)
+        plt.xticks(fontsize=15)
+        # plot
+        pd.Series(
+            action_dist.mean(axis=0).mean(axis=1)
+        ).plot(kind='bar', figsize=(20, 10), ax=ax)
+        # plt.savefig(str(self.log_path / f"{title}_action_dist.png"))
+        return fig

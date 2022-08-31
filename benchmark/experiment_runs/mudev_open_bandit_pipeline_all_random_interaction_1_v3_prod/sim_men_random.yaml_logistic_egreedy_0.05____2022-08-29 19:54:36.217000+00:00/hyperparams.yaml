@@ -1,0 +1,15 @@
+lightgbm:
+  learning_rate: 0.01
+  max_depth: 5
+  min_samples_leaf: 10
+  n_estimators: 30
+  random_state: 12345
+logistic_regression:
+  C: 100
+  max_iter: 10000
+  random_state: 12345
+random_forest:
+  max_depth: 5
+  min_samples_leaf: 10
+  n_estimators: 30
+  random_state: 12345

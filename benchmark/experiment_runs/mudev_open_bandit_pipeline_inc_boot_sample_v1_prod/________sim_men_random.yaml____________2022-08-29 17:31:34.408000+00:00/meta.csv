@@ -1,0 +1,47 @@
+,31
+run_id,cedd0d610a0d4a5782cdf552b37e56fb
+experiment_id,345
+status,FINISHED
+artifact_uri,s3://mlflow-artifacts-bucket/345/cedd0d610a0d4a5782cdf552b37e56fb/artifacts
+start_time,2022-08-29 17:31:34.408000+00:00
+end_time,2022-08-29 22:42:51.048000+00:00
+metrics.execution_time_minutes,311.27272396882375
+params.random_state,12345
+params.bandit_sim_policy_name,
+params.bootstrap_sample_size_bandit_feedback,-1
+params.hyper_parameter,
+params.campaign,men
+params.n_bootstrap_samples_for_ope,400000
+params.n_jobs,50
+params.batch_update_size,100
+params.config_file_name,sim_men_random.yaml
+params.action_dist_method,
+params.behavior_policy,random
+params.n_sim_to_compute_action_dist,1000000
+params.base_model,lightgbm
+params.bts-obp,"BernoulliTS(n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha=[47.0, 8.0, 62.0, 142.0, 3.0, 6.0, 100.0, 48.0, 23.0, 71.0, 61.0, 13.0, 16.0, 518.0, 30.0, 7.0, 4.0, 23.0, 8.0, 10.0, 11.0, 11.0, 18.0, 121.0, 11.0, 4.0, 32.0, 30.0, 9.0, 22.0, 6.0, 23.0, 5.0, 54.0], beta=[12198.0, 3566.0, 15993.0, 35522.0, 2367.0, 3100.0, 24665.0, 13210.0, 7061.0, 18061.0, 17449.0, 5644.0, 6787.0, 111326.0, 8776.0, 3334.0, 2271.0, 7389.0, 2659.0, 3665.0, 4724.0, 3561.0, 5085.0, 27407.0, 4601.0, 2923.0, 8897.0, 8654.0, 4000.0, 6580.0, 3174.0, 6766.0, 2602.0, 14506.0], is_zozotown_prior=True, campaign='men', policy_name='bts-obp')"
+params.logistic_ucb_0.0,"LogisticUCB(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha_=1.0, lambda_=1.0, epsilon=0.0)"
+params.linear_epsilon_greedy_0.05,"LinEpsilonGreedy(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.05)"
+params.egreedy_0.02,"EpsilonGreedy(n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.02)"
+params.egreedy_0.05,"EpsilonGreedy(n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.05)"
+params.egreedy_0.1,"EpsilonGreedy(n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.1)"
+params.logistic_egreedy_0.1,"LogisticEpsilonGreedy(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha_=1.0, lambda_=1.0, epsilon=0.1)"
+params.linear_ucb_0.0,"LinUCB(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.0)"
+params.linear_ucb_3.0,"LinUCB(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=3.0)"
+params.linear_epsilon_greedy_0.02,"LinEpsilonGreedy(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.02)"
+params.logistic_ucb_1.0,"LogisticUCB(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha_=1.0, lambda_=1.0, epsilon=1.0)"
+params.logistic_ucb_3.0,"LogisticUCB(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha_=1.0, lambda_=1.0, epsilon=3.0)"
+params.logistic_ts,"LogisticTS(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha_=1.0, lambda_=1.0, policy_name='logistic_ts')"
+params.linear_epsilon_greedy_0.1,"LinEpsilonGreedy(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=0.1)"
+params.bts,"BernoulliTS(n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha=array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
+       1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]), beta=array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
+       1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]), is_zozotown_prior=False, campaign=None, policy_name='bts')"
+params.logistic_egreedy_0.05,"LogisticEpsilonGreedy(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, alpha_=1.0, lambda_=1.0, epsilon=0.05)"
+params.linear_ts,"LinTS(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345)"
+params.egreedy_1.0,"Random(n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=1.0, policy_name='egreedy_1.0')"
+params.linear_ucb_1.0,"LinUCB(dim=27, n_actions=34, len_list=3, batch_size=100, random_state=12345, epsilon=1.0)"
+tags.mlflow.source.type,LOCAL
+tags.mlflow.runName,________sim_men_random.yaml________
+tags.mlflow.source.git.commit,39f2ac194058584452847f206624148defd5f2d5
+tags.mlflow.source.name,kepten_first_template/main.py
+tags.mlflow.user,it-research

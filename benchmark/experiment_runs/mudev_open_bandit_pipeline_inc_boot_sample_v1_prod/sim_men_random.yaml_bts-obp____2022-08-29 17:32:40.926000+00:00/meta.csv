@@ -1,0 +1,45 @@
+,17
+run_id,6c5247cdba8540ddb1452653395c3d32
+experiment_id,345
+status,FINISHED
+artifact_uri,s3://mlflow-artifacts-bucket/345/6c5247cdba8540ddb1452653395c3d32/artifacts
+start_time,2022-08-29 17:32:40.926000+00:00
+end_time,2022-08-29 21:53:34.578000+00:00
+metrics.execution_time_minutes,260.90303351481754
+params.random_state,12345
+params.bandit_sim_policy_name,bts-obp
+params.bootstrap_sample_size_bandit_feedback,-1
+params.hyper_parameter,None
+params.campaign,men
+params.n_bootstrap_samples_for_ope,400000
+params.n_jobs,50
+params.batch_update_size,100
+params.config_file_name,sim_men_random.yaml
+params.action_dist_method,bts-obp found - compute_batch_action_dist
+params.behavior_policy,random
+params.n_sim_to_compute_action_dist,1000000
+params.base_model,lightgbm
+params.bts-obp,
+params.logistic_ucb_0.0,
+params.linear_epsilon_greedy_0.05,
+params.egreedy_0.02,
+params.egreedy_0.05,
+params.egreedy_0.1,
+params.logistic_egreedy_0.1,
+params.linear_ucb_0.0,
+params.linear_ucb_3.0,
+params.linear_epsilon_greedy_0.02,
+params.logistic_ucb_1.0,
+params.logistic_ucb_3.0,
+params.logistic_ts,
+params.linear_epsilon_greedy_0.1,
+params.bts,
+params.logistic_egreedy_0.05,
+params.linear_ts,
+params.egreedy_1.0,
+params.linear_ucb_1.0,
+tags.mlflow.source.type,LOCAL
+tags.mlflow.runName,sim_men_random.yaml_bts-obp
+tags.mlflow.source.git.commit,39f2ac194058584452847f206624148defd5f2d5
+tags.mlflow.source.name,kepten_first_template/main.py
+tags.mlflow.user,it-research
